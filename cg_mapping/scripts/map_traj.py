@@ -8,7 +8,6 @@ from optparse import OptionParser
 import mdtraj
 import mbuild as mb
 
-import cg_mapping
 import cg_mapping.mapping_functions as mapping_functions
 
 PATH_TO_MAPPINGS='/raid6/homes/ahy3nz/Programs/cg_mapping/cg_mapping/mappings/'

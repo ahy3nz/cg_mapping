@@ -37,6 +37,8 @@ def _load_mapping(mapfile=None):
     col0: bead index
     col1: bead type
     col2: atom indices
+
+    xml files are arranged by mapping > molecule > beads + bonds
         """
     extension = mapfile[-4:]
     if 'map' in extension:
@@ -189,7 +191,6 @@ def _map_waters(traj, water_start, frame_index):
 
     """
     from sklearn import cluster
-    start = time.time()
     frame = traj[frame_index]
     # Get atom indices of all water oxygens
     waters = frame.topology.select('water and name O')
@@ -221,8 +222,6 @@ def _map_waters(traj, water_start, frame_index):
         com = mdtraj.compute_center_of_mass(frame.atom_slice(water_cluster))
         single_frame_coms.append((frame_index, cg_index+water_start, com))
         #CG_xyz[frame_index, cg_index + water_start,:] = com
-    end = time.time()
-    print("K-means for frame {}: {}".format(frame_index, end-start))
 
     return single_frame_coms
  

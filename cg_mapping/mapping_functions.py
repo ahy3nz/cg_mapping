@@ -132,9 +132,8 @@ def create_CG_topology(topol=None, all_CG_mappings=None, water_bead_mapping=4,
             # For each CG bead, construct CG bead object, relating it to the
             # global atom indices
             # This first requires getting the local atom indices for that residue
-            atoms = [a for a in residue.atoms]
             for key in molecule_mapping.keys():
-                temp_CG_atoms = [atoms[index] for index in molecule_mapping[key][1]]
+                temp_CG_atoms = [residue.atom(index) for index in molecule_mapping[key][1]]
                 new_bead = CG_bead(beadindex=0,
                                    beadtype=molecule_mapping[key][0],
                                    resname=residue.name,

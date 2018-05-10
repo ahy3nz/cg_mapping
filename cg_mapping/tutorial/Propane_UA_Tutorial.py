@@ -27,7 +27,7 @@ import mdtraj
 import itertools
 
 
-traj = mdtraj.load("npt_b.xtc", top="npt_b.pdb")
+traj = mdtraj.load("nvt_c.xtc", top="nvt_c.pdb")
 
 
 # Next, we need to identify all the beadtypes in this system
@@ -104,9 +104,9 @@ all_angle_parameters.to_csv('angle_parameters.dat', sep='\t', index=False)
 
 # In[11]:
 
-for x,y in itertools.combinations_with_replacement(beadtypes, 2):
-    print("---{}-{}---".format(x,y))
-    system_state.compute_rdf(x,y,"{}-{}-{}".format(x,y, "state"))
+#for x,y in itertools.combinations_with_replacement(beadtypes, 2):
+#    print("---{}-{}---".format(x,y))
+#    system_state.compute_rdf(x,y,"{}-{}-{}".format(x,y, "state"))
 
 
 # In[ ]:

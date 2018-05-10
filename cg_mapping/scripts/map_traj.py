@@ -1,21 +1,24 @@
 import time
+import os
 import pdb
 import warnings
 import itertools
 from multiprocessing import Pool
 from collections import OrderedDict
-import os
 from optparse import OptionParser
+
+from lxml import etree
 import numpy as np
 import mdtraj
 import mbuild as mb
+
 import cg_mapping
 from cg_mapping.CG_bead import CG_bead
 
 PATH_TO_MAPPINGS='/raid6/homes/ahy3nz/Programs/cg_mapping/cg_mapping/mappings/'
 HOOMD_FF="/raid6/homes/ahy3nz/Programs/setup/FF/CG/msibi_ff.xml"
 
-def _load_mapping(mapfile=None,reverse=False):
+def _load_mapping(mapfile=None):
     """ Load a forward mapping
     
     Parameters
@@ -34,9 +37,17 @@ def _load_mapping(mapfile=None,reverse=False):
     col0: bead index
     col1: bead type
     col2: atom indices
-
         """
+    extension = mapfile[-4:]
+    if 'map' in extension:
+        return _load_map_file(mapfile=mapfile)
+    elif 'xml' in extension:
+        return _load_xml_file(mapfile=mapfile)
+    else:
+        sys.exit("Invalid mappingfile")
 
+def _load_map_file(mapfile=None):
+    """ Load from a .map file """
     mapping_dict = OrderedDict()
     bonding_info = []
     with open(mapfile,'r') as f:
@@ -53,6 +64,31 @@ def _load_mapping(mapfile=None,reverse=False):
 
     return mapping_dict, bonding_info
 
+def _load_xml_file(mapfile=None):
+    """ load from a .xml file """
+    mapping_dict = OrderedDict()
+    bonding_info = []
+    tree = etree.parse(mapfile)
+    root = tree.getroot()
+    molecule = root.find("Molecule")
+
+    beads = molecule.find("Beads")
+    for bead in beads.iterchildren():
+        if 'Bead' in bead.tag:
+            mapping_dict.update({bead.attrib['index'].strip():
+                                [bead.attrib['beadtype'], 
+                                 bead.attrib['map'].strip()]})
+        else:
+            sys.exit("Unidentified tag {}".format(bead.tag))
+    
+    bonds = molecule.find("Bonds")
+    for bond in bonds.iterchildren():
+        if "Bond" in bond.tag:
+            bonding_info.append((bond.attrib['bead1'], bond.attrib['bead2']))
+        else:
+            sys.exit("Unidentified tag {}".format(bond.tag))
+
+    return mapping_dict, bonding_info
 
    
 def _create_CG_topology(topol=None, all_CG_mappings=None, water_bead_mapping=4,
@@ -314,99 +350,100 @@ def compute_avg_box(traj):
     return np.mean(traj.unitcell_lengths, axis=0)
 
 
-parser = OptionParser()
-parser.add_option("-f", action="store", type="string", dest = "trajfile", default='last20.xtc')
-parser.add_option("-c", action="store", type="string", dest = "topfile", default='md_pureDSPC.pdb')
-parser.add_option("-o", action="store", type="string", dest = "output", default='cg-traj')
-(options, args) = parser.parse_args()
-
-
-#trajfile = "last20.xtc"
-
-#pdbfile = "md_DSPC-34_alc16-33_acd16-33_1-27b.gro"
-traj = mdtraj.load(options.trajfile, top=options.topfile)
-topol = traj.topology
-start=time.time()
-# Read in the mapping files, could be made more pythonic
-DSPCmapfile = os.path.join(PATH_TO_MAPPINGS,'DSPC.map')#'mappings/DSPC.map'
-watermapfile = os.path.join(PATH_TO_MAPPINGS,'water.map')
-alc16mapfile = os.path.join(PATH_TO_MAPPINGS,'C16OH.map')
-acd16mapfile = os.path.join(PATH_TO_MAPPINGS,'C16FFA.map')
-# Huge dictionary of dictionaries, keys are molecule names
-# Values are the molecule's mapping dictionary
-# could be made more pythonic
-all_CG_mappings = OrderedDict()
-all_bonding_info = OrderedDict()
-
-molecule_mapping, molecule_bonding = _load_mapping(mapfile=DSPCmapfile)
-all_CG_mappings.update({'DSPC': molecule_mapping})
-all_bonding_info.update({'DSPC': molecule_bonding})
-
-molecule_mapping, molecule_bonding = _load_mapping(mapfile=watermapfile)
-all_CG_mappings.update({'HOH': molecule_mapping})
-all_bonding_info.update({'HOH': molecule_bonding})
-
-molecule_mapping, molecule_bonding = _load_mapping(mapfile=alc16mapfile)
-all_CG_mappings.update({'alc16': molecule_mapping})
-all_bonding_info.update({'alc16': molecule_bonding})
-
-molecule_mapping, molecule_bonding = _load_mapping(mapfile=acd16mapfile)
-all_CG_mappings.update({'acd16': molecule_mapping})
-all_bonding_info.update({'acd16': molecule_mapping})
-
-CG_topology_map, CG_topology = _create_CG_topology(topol=topol, all_CG_mappings=all_CG_mappings, all_bonding_info=all_bonding_info)
-CG_xyz = _convert_xyz(traj=traj, CG_topology_map=CG_topology_map)
-
-CG_traj = mdtraj.Trajectory(CG_xyz, CG_topology, time=traj.time, 
-        unitcell_lengths=traj.unitcell_lengths, unitcell_angles = traj.unitcell_angles)
-
-
-avg_box_lengths = compute_avg_box(traj)
-print("Avg box length: {}".format(avg_box_lengths))
-
-CG_traj.save('{}.xtc'.format(options.output))
-CG_traj[-1].save('{}.gro'.format(options.output))
-CG_traj[-1].save('{}.h5'.format(options.output))
-CG_traj[-1].save('{}.xyz'.format(options.output))
-CG_traj[-1].save('{}.pdb'.format(options.output))
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    mb_compound = mb.Compound()
-    mb_compound.from_trajectory(CG_traj, frame=-1, coords_only=False)
-    original_box = mb.Box(lengths=[length for length in mb_compound.periodicity])
-
-    # Because we are resizing the box based on the average box over the trajectory,
-    # we need to scale the coordinates appropriately, since they are taken only
-    # from the final frame.
-    scaling_ratio = [new/old for old, new in zip(original_box.lengths, avg_box_lengths)]
-    print("scaling_ratio: {}".format(scaling_ratio))
-    for particle in mb_compound.particles():
-        for i, frame in enumerate(particle.xyz):
-            particle.xyz[i] = [factor*coord for factor, coord in zip(scaling_ratio, particle.xyz[i])]
-
-    # Tile this using grid 3d pattern
-    cube = mb.Grid3DPattern(2,2,2)
-    # Define a new box based on average box lengths from AA traj, scaled by 8
-    new_box = mb.Box(lengths=[2*length for length in avg_box_lengths])
-    # Scale pattern lengths based on the new box lengths
-    cube.scale([length for length in new_box.lengths])
-    replicated = cube.apply(mb_compound)
-    mirrored_image = mb.Compound()
-    for item in replicated:
-        mirrored_image.add(item)
-
-    # Particle renaming due to mbuild coarsegrained format
-    for particle in mb_compound.particles():
-        particle.name = "_"+ particle.name.strip()
-    for particle in mirrored_image.particles():
-        particle.name = "_"+ particle.name.strip()
-
-    mb_compound.save('{}.hoomdxml'.format(options.output), ref_energy = 0.239, ref_distance = 10, forcefield_files=HOOMD_FF, overwrite=True, box=original_box)
-    mirrored_image.save('{}_2x2x2.hoomdxml'.format(options.output), ref_energy = 0.239, ref_distance = 10, forcefield_files=HOOMD_FF, overwrite=True, box=new_box)
-
+if __name__ == "__main__":
+    parser = OptionParser()
+    parser.add_option("-f", action="store", type="string", dest = "trajfile", default='last20.xtc')
+    parser.add_option("-c", action="store", type="string", dest = "topfile", default='md_pureDSPC.pdb')
+    parser.add_option("-o", action="store", type="string", dest = "output", default='cg-traj')
+    (options, args) = parser.parse_args()
     
-end=time.time()
-print(end-start)
-
-
+    
+    #trajfile = "last20.xtc"
+    
+    #pdbfile = "md_DSPC-34_alc16-33_acd16-33_1-27b.gro"
+    traj = mdtraj.load(options.trajfile, top=options.topfile)
+    topol = traj.topology
+    start=time.time()
+    # Read in the mapping files, could be made more pythonic
+    DSPCmapfile = os.path.join(PATH_TO_MAPPINGS,'DSPC.map')#'mappings/DSPC.map'
+    watermapfile = os.path.join(PATH_TO_MAPPINGS,'water.map')
+    alc16mapfile = os.path.join(PATH_TO_MAPPINGS,'C16OH.map')
+    acd16mapfile = os.path.join(PATH_TO_MAPPINGS,'C16FFA.map')
+    # Huge dictionary of dictionaries, keys are molecule names
+    # Values are the molecule's mapping dictionary
+    # could be made more pythonic
+    all_CG_mappings = OrderedDict()
+    all_bonding_info = OrderedDict()
+    
+    molecule_mapping, molecule_bonding = _load_mapping(mapfile=DSPCmapfile)
+    all_CG_mappings.update({'DSPC': molecule_mapping})
+    all_bonding_info.update({'DSPC': molecule_bonding})
+    
+    molecule_mapping, molecule_bonding = _load_mapping(mapfile=watermapfile)
+    all_CG_mappings.update({'HOH': molecule_mapping})
+    all_bonding_info.update({'HOH': molecule_bonding})
+    
+    molecule_mapping, molecule_bonding = _load_mapping(mapfile=alc16mapfile)
+    all_CG_mappings.update({'alc16': molecule_mapping})
+    all_bonding_info.update({'alc16': molecule_bonding})
+    
+    molecule_mapping, molecule_bonding = _load_mapping(mapfile=acd16mapfile)
+    all_CG_mappings.update({'acd16': molecule_mapping})
+    all_bonding_info.update({'acd16': molecule_mapping})
+    
+    CG_topology_map, CG_topology = _create_CG_topology(topol=topol, all_CG_mappings=all_CG_mappings, all_bonding_info=all_bonding_info)
+    CG_xyz = _convert_xyz(traj=traj, CG_topology_map=CG_topology_map)
+    
+    CG_traj = mdtraj.Trajectory(CG_xyz, CG_topology, time=traj.time, 
+            unitcell_lengths=traj.unitcell_lengths, unitcell_angles = traj.unitcell_angles)
+    
+    
+    avg_box_lengths = compute_avg_box(traj)
+    print("Avg box length: {}".format(avg_box_lengths))
+    
+    CG_traj.save('{}.xtc'.format(options.output))
+    CG_traj[-1].save('{}.gro'.format(options.output))
+    CG_traj[-1].save('{}.h5'.format(options.output))
+    CG_traj[-1].save('{}.xyz'.format(options.output))
+    CG_traj[-1].save('{}.pdb'.format(options.output))
+    
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        mb_compound = mb.Compound()
+        mb_compound.from_trajectory(CG_traj, frame=-1, coords_only=False)
+        original_box = mb.Box(lengths=[length for length in mb_compound.periodicity])
+    
+        # Because we are resizing the box based on the average box over the trajectory,
+        # we need to scale the coordinates appropriately, since they are taken only
+        # from the final frame.
+        scaling_ratio = [new/old for old, new in zip(original_box.lengths, avg_box_lengths)]
+        print("scaling_ratio: {}".format(scaling_ratio))
+        for particle in mb_compound.particles():
+            for i, frame in enumerate(particle.xyz):
+                particle.xyz[i] = [factor*coord for factor, coord in zip(scaling_ratio, particle.xyz[i])]
+    
+        # Tile this using grid 3d pattern
+        cube = mb.Grid3DPattern(2,2,2)
+        # Define a new box based on average box lengths from AA traj, scaled by 8
+        new_box = mb.Box(lengths=[2*length for length in avg_box_lengths])
+        # Scale pattern lengths based on the new box lengths
+        cube.scale([length for length in new_box.lengths])
+        replicated = cube.apply(mb_compound)
+        mirrored_image = mb.Compound()
+        for item in replicated:
+            mirrored_image.add(item)
+    
+        # Particle renaming due to mbuild coarsegrained format
+        for particle in mb_compound.particles():
+            particle.name = "_"+ particle.name.strip()
+        for particle in mirrored_image.particles():
+            particle.name = "_"+ particle.name.strip()
+    
+        mb_compound.save('{}.hoomdxml'.format(options.output), ref_energy = 0.239, ref_distance = 10, forcefield_files=HOOMD_FF, overwrite=True, box=original_box)
+        mirrored_image.save('{}_2x2x2.hoomdxml'.format(options.output), ref_energy = 0.239, ref_distance = 10, forcefield_files=HOOMD_FF, overwrite=True, box=new_box)
+    
+        
+    end=time.time()
+    print(end-start)
+    
+    

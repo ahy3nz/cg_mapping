@@ -58,8 +58,9 @@ def _load_map_file(mapfile=None):
                     bonding_info.append((atom_i, atom_j))
 
                 else:
+                    atom_indices = [int(i) for i in line.split(":")[2].strip().split()]
                     mapping_dict.update({line.split(":")[0].rstrip():
-                            [line.split(":")[1].rstrip(), line.split(":")[2].rstrip().split()]})
+                            [line.split(":")[1].rstrip(), atom_indices]})
 
     return mapping_dict, bonding_info
 
@@ -76,7 +77,7 @@ def _load_xml_file(mapfile=None):
         if 'Bead' in bead.tag:
             mapping_dict.update({bead.attrib['index'].strip():
                                 [bead.attrib['beadtype'], 
-                                 bead.attrib['map'].strip()]})
+                               [int(i) for i in bead.attrib['map'].strip().split()]]})
         else:
             sys.exit("Unidentified tag {}".format(bead.tag))
     
@@ -116,7 +117,6 @@ def create_CG_topology(topol=None, all_CG_mappings=None, water_bead_mapping=4,
     """
     CG_topology_map = []
     CG_topology = mdtraj.Topology()
-    CG_beadindex = 0
     water_counter = 0
     # Loop over all residues
     for residue in topol.residues:
@@ -129,22 +129,33 @@ def create_CG_topology(topol=None, all_CG_mappings=None, water_bead_mapping=4,
             temp_CG_beads = [None]*len(molecule_mapping.keys())
             CG_atoms = []
 
-            for index, atom in enumerate(residue.atoms):
-                temp_CG_indices.append(str(index))
-                temp_CG_atoms.append(atom)
-                for key in molecule_mapping.keys():
-                    if set(molecule_mapping[key][1]) == set(temp_CG_indices):
-                        new_bead = CG_bead(beadindex=0, 
-                                           beadtype=molecule_mapping[key][0],
-                                           resname=residue.name,
-                                           atom_indices=[atom.index for atom in temp_CG_atoms])
-                        CG_beadindex +=1 
-                        temp_CG_indices = []
-                        temp_CG_atoms = []
-                        temp_CG_beads[int(key)] = new_bead
+            # For each CG bead, construct CG bead object, relating it to the
+            # global atom indices
+            # This first requires getting the local atom indices for that residue
+            atoms = [a for a in residue.atoms]
+            for key in molecule_mapping.keys():
+                temp_CG_atoms = [atoms[index] for index in molecule_mapping[key][1]]
+                new_bead = CG_bead(beadindex=0,
+                                   beadtype=molecule_mapping[key][0],
+                                   resname=residue.name,
+                                   atom_indices=[atom.index for atom in temp_CG_atoms])
+                temp_CG_beads[int(key)] = new_bead
 
-                    else:
-                        pass
+            #for index, atom in enumerate(residue.atoms):
+            #    temp_CG_indices.append(str(index))
+            #    temp_CG_atoms.append(atom)
+            #    for key in molecule_mapping.keys():
+            #        if set(molecule_mapping[key][1]) == set(temp_CG_indices):
+            #            new_bead = CG_bead(beadindex=0, 
+            #                               beadtype=molecule_mapping[key][0],
+            #                               resname=residue.name,
+            #                               atom_indices=[atom.index for atom in temp_CG_atoms])
+            #            temp_CG_indices = []
+            #            temp_CG_atoms = []
+            #            temp_CG_beads[int(key)] = new_bead
+
+            #        else:
+            #            pass
 
 
             # Add beads to topology by adding atoms

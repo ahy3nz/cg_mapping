@@ -1,0 +1,35 @@
+<Mapping>
+  <Molecule name="DPPC">
+    <Beads n_beads="14">
+      <Bead beadtype="PCN" index="0" map="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"/>
+      <Bead beadtype="PCP" index="1" map="16 17 18 19 20 21 22 23 24 25 26"/>
+      <Bead beadtype="E1" index="2" map="27 28 29 30 31"/>
+      <Bead beadtype="E1" index="3" map="35 36 37 38 39 40"/>
+      <Bead beadtype="C3" index="4" map="32 33 34 44 45 46 47 48 49"/>
+      <Bead beadtype="C3" index="5" map="50 51 52 53 54 55 56 57 58"/>
+      <Bead beadtype="C3" index="6" map="59 60 61 62 63 64 65 66 67"/>
+      <Bead beadtype="C3" index="7" map="68 69 70 71 72 73 74 75 76"/>
+      <Bead beadtype="C3" index="8" map="77 78 79 80 81 82 83 84 85 86"/>
+      <Bead beadtype="C3" index="9" map="41 42 43 87 88 89 90 91 92"/>
+      <Bead beadtype="C3" index="10" map="93 94 95 96 97 98 99 100 101"/>
+      <Bead beadtype="C3" index="11" map="102 103 104 105 106 107 108 109 110"/>
+      <Bead beadtype="C3" index="12" map="111 112 113 114 115 116 117 118 119"/>
+      <Bead beadtype="C3" index="13" map="120 121 123 124 125 126 127 128 129"/>
+    </Beads>
+    <Bonds n_bonds="13">
+      <Bond bead1="0" bead2="1"/>
+      <Bond bead1="1" bead2="2"/>
+      <Bond bead1="2" bead2="3"/>
+      <Bond bead1="2" bead2="4"/>
+      <Bond bead1="4" bead2="5"/>
+      <Bond bead1="5" bead2="6"/>
+      <Bond bead1="6" bead2="7"/>
+      <Bond bead1="7" bead2="8"/>
+      <Bond bead1="3" bead2="9"/>
+      <Bond bead1="9" bead2="10"/>
+      <Bond bead1="10" bead2="11"/>
+      <Bond bead1="11" bead2="12"/>
+      <Bond bead1="12" bead2="13"/>
+    </Bonds>
+  </Molecule>
+</Mapping>

@@ -208,7 +208,7 @@ def _map_waters(traj, water_start, frame_index):
 
     # Number of CG water molecules based on mapping scheme
     water_bead_mapping = 4
-    n_cg_water = int(n_aa_water /  water_bead_mapping)
+    n_cg_water = int(np.floor(n_aa_water /  water_bead_mapping))
     # Water clusters are a list (n_cg_water) of empty lists
     water_clusters = [[] for i in range(n_cg_water)]
 

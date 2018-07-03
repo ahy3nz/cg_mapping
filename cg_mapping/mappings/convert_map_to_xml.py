@@ -1,8 +1,8 @@
 from lxml import etree
 import pdb
 
-inputFile = "DSPC.map"
-outputFile = "DSPC.xml"
+inputFile = "C16FFA.map"
+outputFile = "C16FFA.xml"
 root = etree.Element('Mapping')
 mapping = etree.SubElement(root,"Molecule", name=outputFile[:-4])
 beadtypes = etree.SubElement(mapping, 'Beads')

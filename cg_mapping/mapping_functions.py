@@ -258,18 +258,21 @@ def convert_xyz(traj=None, CG_topology_map=None, water_bead_mapping=4,parallel=T
     water_indices = []
     print("Converting non-water atoms into beads over all frames")
     start = time.time()
+    nonwater_index = 0
     for index, bead in enumerate(CG_topology_map):
         if 'HOH' not in bead.resname:
             # Handle non-water residuse with center of mass calculation over all frames
             atom_indices = bead.atom_indices 
             # Two ways to compute center of mass, both are pretty fast
             bead_coordinates = mdtraj.compute_center_of_mass(traj.atom_slice(atom_indices))
-            CG_xyz[:, index, :] = bead_coordinates
+            CG_xyz[:, nonwater_index, :] = bead_coordinates
+            nonwater_index +=1 
         else:
             # Handle waters by initially setting the bead coordinates to zero
             # Remember which coarse grain indices correspond to water
             water_indices.append(index)
-            CG_xyz[:,index,:] = np.zeros((traj.n_frames,3))
+            #CG_xyz[:,index,:] = np.zeros((traj.n_frames,3))
+            #water_index +=1
 
     end = time.time()
     print("Converting took: {}".format(end-start))
@@ -278,7 +281,8 @@ def convert_xyz(traj=None, CG_topology_map=None, water_bead_mapping=4,parallel=T
     print("Converting water beads via k-means")
     start = time.time()
     if len(water_indices)>0:
-        water_start = min(water_indices)
+        #water_start = min(water_indices)
+        water_start = nonwater_index
 
 
         # Perform kmeans, frame-by-frame, over all water residues

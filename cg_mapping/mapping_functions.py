@@ -220,6 +220,7 @@ def _map_waters(traj, water_start, frame_index):
     for atom_index, cluster_index in enumerate(k_means.labels_):
         # Sort each water atom into the corresponding cluster
         # The item being added should be an atom index
+        
         water_clusters[cluster_index].append(waters[atom_index])
 
 
@@ -229,7 +230,6 @@ def _map_waters(traj, water_start, frame_index):
         com = mdtraj.compute_center_of_mass(frame.atom_slice(water_cluster))
         single_frame_coms.append((frame_index, cg_index+water_start, com))
         #CG_xyz[frame_index, cg_index + water_start,:] = com
-
     return single_frame_coms
  
 def convert_xyz(traj=None, CG_topology_map=None, water_bead_mapping=4,parallel=True):
@@ -265,8 +265,7 @@ def convert_xyz(traj=None, CG_topology_map=None, water_bead_mapping=4,parallel=T
             atom_indices = bead.atom_indices 
             # Two ways to compute center of mass, both are pretty fast
             bead_coordinates = mdtraj.compute_center_of_mass(traj.atom_slice(atom_indices))
-            CG_xyz[:, nonwater_index, :] = bead_coordinates
-            nonwater_index +=1 
+            CG_xyz[:, index, :] = bead_coordinates
         else:
             # Handle waters by initially setting the bead coordinates to zero
             # Remember which coarse grain indices correspond to water
@@ -282,7 +281,7 @@ def convert_xyz(traj=None, CG_topology_map=None, water_bead_mapping=4,parallel=T
     start = time.time()
     if len(water_indices)>0:
         #water_start = min(water_indices)
-        water_start = nonwater_index
+        water_start = nonwater_index + 1
 
 
         # Perform kmeans, frame-by-frame, over all water residues
@@ -300,8 +299,12 @@ def convert_xyz(traj=None, CG_topology_map=None, water_bead_mapping=4,parallel=T
             print("Writing to CG-xyz")
             start = time.time()
             for snapshot in all_frame_coms:
-                for element in snapshot:
-                    CG_xyz[element[0],element[1],:] = element[2]
+                for element,water_index in zip(snapshot, 
+                                                water_indices):
+                    #CG_xyz[element[0],element[1],:] = element[2]
+                    print(element)
+                    print(element[2].shape)
+                    CG_xyz[element[0], water_index , : ] = element[2]
             end =  time.time()
             print("Writing took: {}".format(end-start))
 

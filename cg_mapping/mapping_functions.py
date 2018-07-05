@@ -184,7 +184,7 @@ def create_CG_topology(topol=None, all_CG_mappings=None, water_bead_mapping=4,
 
     return CG_topology_map, CG_topology
 
-def _map_waters(traj, water_start, frame_index):
+def _map_waters(traj, frame_index):
     """ Worker function to parallelize mapping waters via kmeans
 
     Parameters
@@ -193,9 +193,7 @@ def _map_waters(traj, water_start, frame_index):
         full atomstic trajectory
     frame index : int
         parallelizing calculation frame by frame
-    water_start : int
-        counter denoting which index in the CG coordiantes is water
-
+    
     """
     from sklearn import cluster
     frame = traj[frame_index]
@@ -208,7 +206,7 @@ def _map_waters(traj, water_start, frame_index):
 
     # Number of CG water molecules based on mapping scheme
     water_bead_mapping = 4
-    n_cg_water = int(n_aa_water /  water_bead_mapping)
+    n_cg_water = int(np.floor(n_aa_water /  water_bead_mapping))
     # Water clusters are a list (n_cg_water) of empty lists
     water_clusters = [[] for i in range(n_cg_water)]
 
@@ -220,6 +218,7 @@ def _map_waters(traj, water_start, frame_index):
     for atom_index, cluster_index in enumerate(k_means.labels_):
         # Sort each water atom into the corresponding cluster
         # The item being added should be an atom index
+        
         water_clusters[cluster_index].append(waters[atom_index])
 
 
@@ -227,9 +226,8 @@ def _map_waters(traj, water_start, frame_index):
     # For each cluster, compute enter of mass
     for cg_index, water_cluster in enumerate(water_clusters):
         com = mdtraj.compute_center_of_mass(frame.atom_slice(water_cluster))
-        single_frame_coms.append((frame_index, cg_index+water_start, com))
+        single_frame_coms.append((frame_index, com))
         #CG_xyz[frame_index, cg_index + water_start,:] = com
-
     return single_frame_coms
  
 def convert_xyz(traj=None, CG_topology_map=None, water_bead_mapping=4,parallel=True):
@@ -269,7 +267,6 @@ def convert_xyz(traj=None, CG_topology_map=None, water_bead_mapping=4,parallel=T
             # Handle waters by initially setting the bead coordinates to zero
             # Remember which coarse grain indices correspond to water
             water_indices.append(index)
-            CG_xyz[:,index,:] = np.zeros((traj.n_frames,3))
 
     end = time.time()
     print("Converting took: {}".format(end-start))
@@ -278,9 +275,6 @@ def convert_xyz(traj=None, CG_topology_map=None, water_bead_mapping=4,parallel=T
     print("Converting water beads via k-means")
     start = time.time()
     if len(water_indices)>0:
-        water_start = min(water_indices)
-
-
         # Perform kmeans, frame-by-frame, over all water residues
         # Workers will return centers of masses of clusters, frame index, and cg index
         # Master will assign to CG_xyz
@@ -288,7 +282,7 @@ def convert_xyz(traj=None, CG_topology_map=None, water_bead_mapping=4,parallel=T
             all_frame_coms = []
             with Pool() as p:
                 all_frame_coms = p.starmap(_map_waters, zip(itertools.repeat(traj), 
-                    itertools.repeat(water_start), range(traj.n_frames)))
+                                        range(traj.n_frames)))
 
             end = time.time()
             print("K-means and converting took: {}".format(end-start))
@@ -296,8 +290,8 @@ def convert_xyz(traj=None, CG_topology_map=None, water_bead_mapping=4,parallel=T
             print("Writing to CG-xyz")
             start = time.time()
             for snapshot in all_frame_coms:
-                for element in snapshot:
-                    CG_xyz[element[0],element[1],:] = element[2]
+                for element, water_index in zip(snapshot, water_indices):
+                    CG_xyz[element[0], water_index , : ] = element[1]
             end =  time.time()
             print("Writing took: {}".format(end-start))
 

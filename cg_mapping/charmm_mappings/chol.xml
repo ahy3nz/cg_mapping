@@ -1,0 +1,58 @@
+<Mapping>
+  <Molecule name="chol">
+    <Beads n_beads="11">
+      <Bead beadtype="chead" index="0" map="0 2"/>
+      <Bead beadtype="ring" index="1" map="0 1 15 16 17 18"/>
+      <Bead beadtype="ring" index="2" map="4 5 6 7 8 9 10"/>
+      <Bead beadtype="ring" index="3" map="26 27 28 29 30 31 32 33"/>
+      <Bead beadtype="ring" index="4" map="34 47 48"/>
+      <Bead beadtype="ring" index="5" map="39 40 41 42 43 44 45 46"/>
+      <Bead beadtype="ring" index="6" map="19 20 21 22 23 24 25"/>
+      <Bead beadtype="ctail" index="7" map="49 50 51 52 53 54 55 56 57 58 59 60"/>
+      <Bead beadtype="cterm" index="8" map="61 62 63 64 65 66 67 68 69 70 71 72 73"/>
+      <Bead beadtype="chme" index="9" map="11 12 13 14"/>
+      <Bead beadtype="chme" index="10" map="35 36 37 38"/>
+    </Beads>
+    <Bonds n_bonds="39">
+      <Bond bead1="0" bead2="1"/>
+      <Bond bead1="1" bead2="2"/>
+      <Bond bead1="1" bead2="6"/>
+      <Bond bead1="2" bead2="3"/>
+      <Bond bead1="2" bead2="9"/>
+      <Bond bead1="3" bead2="4"/>
+      <Bond bead1="3" bead2="6"/>
+      <Bond bead1="4" bead2="5"/>
+      <Bond bead1="4" bead2="7"/>
+      <Bond bead1="4" bead2="10"/>
+      <Bond bead1="5" bead2="6"/>
+      <Bond bead1="7" bead2="8"/>
+      <Bond bead1="0" bead2="3"/>
+      <Bond bead1="0" bead2="4"/>
+      <Bond bead1="0" bead2="5"/>
+      <Bond bead1="0" bead2="7"/>
+      <Bond bead1="0" bead2="8"/>
+      <Bond bead1="0" bead2="9"/>
+      <Bond bead1="0" bead2="10"/>
+      <Bond bead1="1" bead2="4"/>
+      <Bond bead1="1" bead2="7"/>
+      <Bond bead1="1" bead2="8"/>
+      <Bond bead1="1" bead2="10"/>
+      <Bond bead1="2" bead2="5"/>
+      <Bond bead1="2" bead2="7"/>
+      <Bond bead1="2" bead2="8"/>
+      <Bond bead1="2" bead2="10"/>
+      <Bond bead1="3" bead2="8"/>
+      <Bond bead1="4" bead2="9"/>
+      <Bond bead1="5" bead2="8"/>
+      <Bond bead1="5" bead2="9"/>
+      <Bond bead1="6" bead2="7"/>
+      <Bond bead1="6" bead2="8"/>
+      <Bond bead1="6" bead2="9"/>
+      <Bond bead1="6" bead2="10"/>
+      <Bond bead1="7" bead2="9"/>
+      <Bond bead1="8" bead2="9"/>
+      <Bond bead1="8" bead2="10"/>
+      <Bond bead1="9" bead2="10"/>
+    </Bonds>
+  </Molecule>
+</Mapping>

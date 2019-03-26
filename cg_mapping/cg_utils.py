@@ -239,10 +239,12 @@ class State(object):
     
         fig,ax =  plt.subplots(1,1)
         # 51 bins, 50 probabilities
-        all_probabilities, bins, patches = ax.hist(bond_distances.flatten(), 50, normed=1)
+        all_probabilities, bins, patches = ax.hist(bond_distances.flatten(), 50, normed=True)
         if plot:
             ax.set_xlabel("Distance (nm)")
-            ax.set_ylabel("Probability")
+            ax.set_ylabel("Frequency density")
+            ax.grid()
+            fig.tight_layout()
             plt.savefig("{}-{}_bond_distribution.jpg".format(atomtype_i, atomtype_j))
             plt.close()
     
@@ -289,16 +291,31 @@ class State(object):
 
         predicted_energies = self.harmonic_energy(all_distances, **bonded_parameters)
         if plot:
-            fig, axarray = plt.subplots(2,1,sharex=True)
-            axarray[0].plot(all_distances, predicted_energies, c='darkgray', label="Predicted")
-            axarray[1].plot(all_distances, all_energies, c='black', label="Target")
-            axarray[0].legend()
-            axarray[1].legend()
-            axarray[1].set_xlabel("Distance (nm)")
-            axarray[0].set_ylabel("Energy (kJ/mol)")
-            axarray[1].set_ylabel("Energy (kJ/mol)")
-            plt.savefig("{}-{}_bond_energies.jpg".format(atomtype_i, atomtype_j))
-            plt.close()
+            #fig, axarray = plt.subplots(2,1,sharex=True)
+            #axarray[0].plot(all_distances, predicted_energies, c='darkgray', label="Predicted")
+            #axarray[1].plot(all_distances, all_energies, c='black', label="Target")
+            #axarray[0].legend()
+            #axarray[1].legend()
+            #axarray[1].set_xlabel("Distance (nm)")
+            #axarray[0].set_ylabel("Energy (kJ/mol)")
+            #axarray[1].set_ylabel("Energy (kJ/mol)")
+            #plt.savefig("{}-{}_bond_energies.jpg".format(atomtype_i, atomtype_j))
+            #plt.close()
+            
+            fig ,ax = plt.subplots(1,1)
+            ax.plot(all_distances, predicted_energies, c='darkgray', 
+                    label="Predicted")
+            ax.plot(all_distances,all_energies, c='black', label="Target", 
+                    alpha=1, linestyle='--')
+            ax.legend()
+            ax.set_xlabel("Distance (nm)")
+            ax.set_ylabel("Energy (kJ/mol)")
+            ax.grid()
+            fig.tight_layout()
+            fig.savefig("{}-{}_bond_energies.jpg".format(atomtype_i, atomtype_j))
+            plt.close(fig)
+
+
         return bonded_parameters
     
     

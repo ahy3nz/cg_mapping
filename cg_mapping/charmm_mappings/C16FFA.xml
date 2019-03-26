@@ -1,12 +1,12 @@
 <Mapping>
   <Molecule name="C16FFA">
     <Beads n_beads="6">
-      <Bead beadtype="C3" index="0" map="0 1 2"/>
-      <Bead beadtype="C3" index="1" map="3 4 5"/>
-      <Bead beadtype="C3" index="2" map="6 7 8"/>
-      <Bead beadtype="C3" index="3" map="9 10 11"/>
-      <Bead beadtype="C3" index="4" map="12 13 14"/>
-      <Bead beadtype="P3" index="5" map="15 16 17 18"/>
+      <Bead beadtype="COOH1" index="0" map="15 16 18"/>
+      <Bead beadtype="C3" index="1" map="12 13 14"/>
+      <Bead beadtype="C3" index="2" map="9 10 11"/>
+      <Bead beadtype="C3" index="3" map="6 7 8"/>
+      <Bead beadtype="C3" index="4" map="3 4 5"/>
+      <Bead beadtype="C3" index="5" map="0 1 2"/>
     </Beads>
     <Bonds n_bonds="5">
       <Bond bead1="0" bead2="1"/>

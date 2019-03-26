@@ -1,0 +1,19 @@
+<Mapping>
+  <Molecule name="C16OH">
+    <Beads n_beads="6">
+      <Bead beadtype="OH5" index="0" map="47 50"/>
+      <Bead beadtype="C3" index="1" map="41 40 35"/>
+      <Bead beadtype="C3" index="2" map="34 29 28"/>
+      <Bead beadtype="C3" index="3" map="0 1 6"/>
+      <Bead beadtype="C3" index="4" map="7 12 13"/>
+      <Bead beadtype="C3" index="5" map="18 19 24"/>
+    </Beads>
+    <Bonds n_bonds="5">
+      <Bond bead1="0" bead2="1"/>
+      <Bond bead1="1" bead2="2"/>
+      <Bond bead1="2" bead2="3"/>
+      <Bond bead1="3" bead2="4"/>
+      <Bond bead1="4" bead2="5"/>
+    </Bonds>
+  </Molecule>
+</Mapping>

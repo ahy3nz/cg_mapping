@@ -281,8 +281,10 @@ def convert_xyz(traj=None, CG_topology_map=None, water_bead_mapping=4,parallel=T
         if parallel:
             all_frame_coms = []
             with Pool() as p:
-                all_frame_coms = p.starmap(_map_waters, zip(itertools.repeat(traj), 
-                                        range(traj.n_frames)))
+                all_frame_coms = p.starmap(_map_waters, 
+                                        zip(itertools.repeat(traj), 
+                                        range(traj.n_frames),
+                                        itertools.repeat(water_bead_mapping)))
 
             end = time.time()
             print("K-means and converting took: {}".format(end-start))

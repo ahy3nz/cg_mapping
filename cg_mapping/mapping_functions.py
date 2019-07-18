@@ -10,7 +10,6 @@ from optparse import OptionParser
 from lxml import etree
 import numpy as np
 import mdtraj
-import mbuild as mb
 
 import cg_mapping
 from cg_mapping.CG_bead import CG_bead

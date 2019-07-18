@@ -184,7 +184,7 @@ def create_CG_topology(topol=None, all_CG_mappings=None, water_bead_mapping=4,
 
     return CG_topology_map, CG_topology
 
-def _map_waters(traj, frame_index):
+def _map_waters(traj, frame_index, water_bead_mapping):
     """ Worker function to parallelize mapping waters via kmeans
 
     Parameters
@@ -205,7 +205,6 @@ def _map_waters(traj, frame_index):
     aa_water_xyz = frame.atom_slice(waters).xyz[0,:,:]
 
     # Number of CG water molecules based on mapping scheme
-    water_bead_mapping = 4
     n_cg_water = int(np.floor(n_aa_water /  water_bead_mapping))
     # Water clusters are a list (n_cg_water) of empty lists
     water_clusters = [[] for i in range(n_cg_water)]
@@ -281,8 +280,10 @@ def convert_xyz(traj=None, CG_topology_map=None, water_bead_mapping=4,parallel=T
         if parallel:
             all_frame_coms = []
             with Pool() as p:
-                all_frame_coms = p.starmap(_map_waters, zip(itertools.repeat(traj), 
-                                        range(traj.n_frames)))
+                all_frame_coms = p.starmap(_map_waters, 
+                                        zip(itertools.repeat(traj), 
+                                        range(traj.n_frames),
+                                        itertools.repeat(water_bead_mapping)))
 
             end = time.time()
             print("K-means and converting took: {}".format(end-start))

@@ -1,7 +1,7 @@
 <Mapping>
   <Molecule name="C16FFA">
     <Beads n_beads="6">
-      <Bead beadtype="COOH1" index="0" map="15 16 18"/>
+      <Bead beadtype="head" index="0" map="15 16 18"/>
       <Bead beadtype="C3" index="1" map="12 13 14"/>
       <Bead beadtype="C3" index="2" map="9 10 11"/>
       <Bead beadtype="C3" index="3" map="6 7 8"/>

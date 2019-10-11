@@ -21,11 +21,15 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
     
     
+    #trajfile = "last20.xtc"
+    
+    #pdbfile = "md_DSPC-34_alc16-33_acd16-33_1-27b.gro"
     traj = mdtraj.load(options.trajfile, top=options.topfile)
     topol = traj.topology
     start=time.time()
     # Read in the mapping files, could be made more pythonic
     DSPCmapfile = os.path.join(PATH_TO_MAPPINGS,'DSPC.xml')#'mappings/DSPC.map'
+    c16ffamapfile = os.path.join(PATH_TO_MAPPINGS,'C16FFA.xml')#'mappings/DSPC.map'
     #watermapfile = os.path.join(PATH_TO_MAPPINGS,'water.map')
     #alc16mapfile = os.path.join(PATH_TO_MAPPINGS,'C16OH.map')
     #acd16mapfile = os.path.join(PATH_TO_MAPPINGS,'C16FFA.map')
@@ -36,8 +40,13 @@ if __name__ == "__main__":
     all_bonding_info = OrderedDict()
     
     molecule_mapping, molecule_bonding = mapping_functions.load_mapping(mapfile=DSPCmapfile)
-    all_CG_mappings.update({'DPPC': molecule_mapping})
-    all_bonding_info.update({'DPPC': molecule_bonding})
+    all_CG_mappings.update({'DSPC': molecule_mapping})
+    all_bonding_info.update({'DSPC': molecule_bonding})
+
+    molecule_mapping, molecule_bonding = mapping_functions.load_mapping(mapfile=c16ffamapfile)
+    all_CG_mappings.update({'ffa1': molecule_mapping})
+    all_bonding_info.update({'ffa1': molecule_bonding})
+
     
     CG_topology_map, CG_topology = mapping_functions.create_CG_topology(topol=topol, 
                             all_CG_mappings=all_CG_mappings, 
@@ -89,31 +98,27 @@ if __name__ == "__main__":
         for particle in mirrored_image.particles():
             particle.name = "_"+ particle.name.strip()
     
-        #from foyer import Forcefield
-        #from mbuild.formats.hoomdxml import write_hoomdxml
-        #ff = Forcefield(forcefield_files=HOOMD_FF)
-        #kwargs  = {}
-        #kwargs['rigid_bodies'] = [p.rigid_id for p in mb_compound.particles()]
-        #structure = mb_compound.to_parmed(box=original_box)
-        #structure = ff.apply(structure, assert_dihedral_params=False)
-        #write_hoomdxml(structure, '{}.hoomdxml'.format(options.output), 
-        #        ref_energy = 0.239, ref_distance = 1, **kwargs)
+        from foyer import Forcefield
+        from mbuild.formats.hoomdxml import write_hoomdxml
+        ff = Forcefield(forcefield_files=HOOMD_FF)
+        kwargs  = {}
+        kwargs['rigid_bodies'] = [p.rigid_id for p in mb_compound.particles()]
+        structure = mb_compound.to_parmed(box=original_box)
+        structure = ff.apply(structure, assert_dihedral_params=False)
+        write_hoomdxml(structure, '{}.hoomdxml'.format(options.output), 
+                ref_energy = 0.239, ref_distance = 10, **kwargs)
 
-        #ff = Forcefield(forcefield_files=HOOMD_FF)
-        #kwargs  = {}
-        #kwargs['rigid_bodies'] = [p.rigid_id for p in mirrored_image.particles()]
-        #structure = mirrored_image.to_parmed(box=new_box)
-        #structure = ff.apply(structure, assert_dihedral_params=False)
-        #write_hoomdxml(structure, '{}_2x2x2.hoomdxml'.format(options.output), 
-        #        ref_energy = 0.239, ref_distance = 1, **kwargs)
+        ff = Forcefield(forcefield_files=HOOMD_FF)
+        kwargs  = {}
+        kwargs['rigid_bodies'] = [p.rigid_id for p in mirrored_image.particles()]
+        structure = mirrored_image.to_parmed(box=new_box)
+        structure = ff.apply(structure, assert_dihedral_params=False)
+        write_hoomdxml(structure, '{}_2x2x2.hoomdxml'.format(options.output), 
+                ref_energy = 0.239, ref_distance = 10, **kwargs)
         
 
-        foyer_kwargs = {"assert_angle_params": False,
-                "assert_dihedral_params": False}
-        mb_compound.save('{}.hoomdxml'.format(options.output), ref_energy = 0.239, ref_distance = 1, forcefield_files=HOOMD_FF, overwrite=True, box=original_box,
-                foyerkwargs=foyer_kwargs)
-        mirrored_image.save('{}_2x2x2.hoomdxml'.format(options.output), ref_energy = 0.239, ref_distance = 1, forcefield_files=HOOMD_FF, overwrite=True, box=new_box,
-                foyerkwargs=foyer_kwargs)
+        #mb_compound.save('{}.hoomdxml'.format(options.output), ref_energy = 0.239, ref_distance = 10, forcefield_files=HOOMD_FF, overwrite=True, box=original_box)
+        #mirrored_image.save('{}_2x2x2.hoomdxml'.format(options.output), ref_energy = 0.239, ref_distance = 10, forcefield_files=HOOMD_FF, overwrite=True, box=new_box)
     
         
     end=time.time()
